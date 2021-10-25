@@ -117,8 +117,8 @@ var InitDemo = function() {
 		var colors = [];
 		var indexData = [];
 
-		latitudeBands = 10;
-		longitudeBands = 10;
+		latitudeBands = 100;
+		longitudeBands = 100;
 		radius = 1;
 
 		for (var latNumber=0; latNumber <= latitudeBands; latNumber++) {
@@ -135,10 +135,9 @@ var InitDemo = function() {
 				var y = cosTheta;
 				var z = sinPhi * sinTheta;
 
-				colors.push(1.0);
-				colors.push(0.4);
-				colors.push(1.0);
-				colors.push(1.0);
+				colors.push(x/1.0);
+				colors.push(y/1.0);
+				colors.push(z/1.0);
 
 				vertexPositionData.push(radius * x);
 				vertexPositionData.push(radius * y);
