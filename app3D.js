@@ -35,11 +35,11 @@ var fragmentShaderText =
 
 var InitDemo = function() {
 
+	var radius = 1.2;
 
 	//////////////////////////////////
 	//       initialize WebGL       //
-	//////////////////////////////////
-	console.log('this is working');
+	//////////////////////////////////;
 
 	var canvas = document.getElementById('game-surface');
 	var gl = canvas.getContext('webgl');
@@ -55,9 +55,6 @@ var InitDemo = function() {
 	canvas.width = window.innerWidth;
 	canvas.height = window.innerHeight;
 	gl.viewport(0,0,canvas.width,canvas.height);
-
-	gl.clearColor(0.5,0.8,0.8,1.0);
-	gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
 
 	//////////////////////////////////
 	// create/compile/link shaders  //
@@ -89,29 +86,12 @@ var InitDemo = function() {
 		return;
 	}
 
-	// var vertices = [
-    //         -1,-1,-1, 1,-1,-1, 1, 1,-1, -1, 1,-1,
-    //         -1,-1, 1, 1,-1, 1, 1, 1, 1, -1, 1, 1,
-    //         -1,-1,-1, -1, 1,-1, -1, 1, 1, -1,-1, 1,
-    //         1,-1,-1, 1, 1,-1, 1, 1, 1, 1,-1, 1,
-    //         -1,-1,-1, -1,-1, 1, 1,-1, 1, 1,-1,-1,
-    //         -1, 1,-1, -1, 1, 1, 1, 1, 1, 1, 1,-1, 
-    //      ];
+	//////////////////////////////////////
+	//			Functions				//
+	//////////////////////////////////////
 
-    //      var colors = [
-    //         1,0,0, 1,0,0, 1,0,0, 1,0,0,
-    //         1,1,0, 1,1,0, 1,1,0, 1,1,0,
-    //         0,0,1, 0,0,1, 0,0,1, 0,0,1,
-    //         0,1,1, 0,1,1, 0,1,1, 0,1,1,
-    //         1,0,1, 1,0,1, 1,0,1, 1,0,1,
-    //         0,1,0, 0,1,0, 0,1,0, 0,1,0 
-    //      ];
 
-    //      var indices = [
-    //         0,1,2, 0,2,3, 4,5,6, 4,6,7,
-    //         8,9,10, 8,10,11, 12,13,14, 12,14,15,
-    //         16,17,18, 16,18,19, 20,21,22, 20,22,23 
-    //      ];
+	function drawSphere(x,y,z,r,color) {
 
 		var vertexPositionData = [];
 		var colors = [];
@@ -119,7 +99,6 @@ var InitDemo = function() {
 
 		latitudeBands = 100;
 		longitudeBands = 100;
-		radius = 1;
 
 		for (var latNumber=0; latNumber <= latitudeBands; latNumber++) {
 			var theta = latNumber * Math.PI / latitudeBands;
@@ -131,17 +110,17 @@ var InitDemo = function() {
 				var sinPhi = Math.sin(phi);
 				var cosPhi = Math.cos(phi);
 
-				var x = cosPhi * sinTheta;
-				var y = cosTheta;
-				var z = sinPhi * sinTheta;
+				var x1 = x + (r * cosPhi * sinTheta);
+				var y1 = y + (r * cosTheta);
+				var z1 = z + (r * sinPhi * sinTheta);
 
-				colors.push(x/1.0);
-				colors.push(y/1.0);
-				colors.push(z/1.0);
+				colors.push(color[0]);
+				colors.push(color[1]);
+				colors.push(color[2]);
 
-				vertexPositionData.push(radius * x);
-				vertexPositionData.push(radius * y);
-				vertexPositionData.push(radius * z);
+				vertexPositionData.push(x1);
+				vertexPositionData.push(y1);
+				vertexPositionData.push(z1);
 
 				var first = (latNumber * (longitudeBands + 1)) + longNumber;
 				var second = first + longitudeBands + 1;
@@ -155,24 +134,111 @@ var InitDemo = function() {
 			}
 		}
 
-		console.log(vertexPositionData);
-		console.log(colors);
-		console.log(indexData);
-
          // Create and store data into vertex buffer
-         var vertex_buffer = gl.createBuffer ();
          gl.bindBuffer(gl.ARRAY_BUFFER, vertex_buffer);
          gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertexPositionData), gl.STATIC_DRAW);
 
          // Create and store data into color buffer
-         var color_buffer = gl.createBuffer ();
          gl.bindBuffer(gl.ARRAY_BUFFER, color_buffer);
          gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(colors), gl.STATIC_DRAW);
 
          // Create and store data into index buffer
-         var index_buffer = gl.createBuffer ();
          gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, index_buffer);
          gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(indexData), gl.STATIC_DRAW);
+
+		//gl.clearColor(0.5,0.8,0.8,1.0);
+		//gl.clear(gl.COLOR_BUFFER_BIT| gl.DEPTH_BUFFER_BIT);
+
+		gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, index_buffer);
+	    gl.drawElements(gl.TRIANGLES, indexData.length, gl.UNSIGNED_SHORT, 0);
+
+	};
+
+	class Bacteria {
+
+		//constructor for when id is specified
+		constructor(id){
+			this.id = id;
+			this.active = true;
+			this.buffer = 0; 
+		}
+
+		//method to randomly decide if int is positive or negative
+		randomizeInteger(num){
+			if(Math.random() >= 0.5){
+				num = num*-1;
+			}
+			return num;
+		}
+
+		//method for generating new random x and y values
+		newPointValues(){
+			this.genTheta = Math.floor(Math.random() * 100);;
+			this.genPhi = Math.floor(Math.random() * 100);;
+		}
+
+		genCircleValue(){
+			var theta =  this.genTheta * Math.PI / 100;
+			var sinTheta = Math.sin(theta);
+			var cosTheta = Math.cos(theta);
+			var phi = this.genPhi * 2 * Math.PI / 100;
+			var sinPhi = Math.sin(phi);
+			var cosPhi = Math.cos(phi);
+
+			this.x = (radius * cosPhi * sinTheta);
+			this.y = (radius * cosTheta);
+			this.z = (radius * sinPhi * sinTheta);
+		}
+
+		//method for generating new bacteria circles
+		generate(){
+			//new random data for x and y
+			this.newPointValues();
+			//new x and y values along the game circle
+			this.genCircleValue();
+
+			this.r = 0.2;
+			//generate new colours
+			this.color = [Math.random() * (0.45), Math.random() * (0.45), Math.random() * (0.45)];
+			this.poisoned = false;
+			genBact++;
+
+		}
+
+		show(){
+			var smooth = this.buffer / 50;
+			if (this.active) this.r = this.r + 0.0001 + (smooth);
+			this.buffer -= smooth;
+			
+			// for (i in generatedBacteria) {
+			// 	if (this.id == generatedBacteria[i].id);
+			// 	else{
+			// 		if (isColliding(this.x, this.y, this.r, generatedBacteria[i].x, generatedBacteria[i].y, generatedBacteria[i].r)) {
+			// 			this.buffer = generatedBacteria[i].r;
+			// 			generatedBacteria[i].delete();
+			// 		}
+			// 	}
+				
+			// }
+
+			// if (this.r >= arcCheck) {
+			// 	lives--; 
+			// 	this.delete();
+			// }
+
+			drawSphere(this.x, this.y, this.z, this.r, this.color);
+		}
+
+		delete(){
+			this.r = 0;
+			this.x = 0;
+			this.y = 0;
+			this.active = false;
+			destroyedBacteria++;
+			console.log(destroyedBacteria);
+		}
+
+	}
 
 	//////////////////////////////////
 	//    create triangle buffer    //
@@ -180,6 +246,9 @@ var InitDemo = function() {
 
 	//all arrays in JS is Float64 by default
 	
+	var vertex_buffer = gl.createBuffer ();
+	var color_buffer = gl.createBuffer ();
+	var index_buffer = gl.createBuffer ();
 
 	var positionAttribLocation = gl.getAttribLocation(program,'position');
 	var colorAttribLocation = gl.getAttribLocation(program,'color');
@@ -204,9 +273,7 @@ var InitDemo = function() {
 		0
 		);
 	gl.enableVertexAttribArray(colorAttribLocation);
-
 	gl.useProgram(program);
-	
 	gl.enable(gl.DEPTH_TEST);
 
 	//////////////////////////////////
@@ -215,15 +282,6 @@ var InitDemo = function() {
 	
 	var world = new Float32Array(16);
 	mat4.identity(world);
-	//var rot = new Float32Array(16);
-	//var trans = new Float32Array(16);
-	//mat4.identity(rot);
-	//mat4.identity(trans);
-	//var x = -2;
-	//var angle = glMatrix.glMatrix.toRadian(45);
-	//mat4.fromRotation(rot,angle,[0,0,1]);
-	//mat4.fromTranslation(trans,[x,0,0]);
-	//mat4.multiply(world,trans,rot);
 
 	var view = new Float32Array(16);
 	mat4.lookAt(view, [0,0,5], [0,0,0],[0,1,0])
@@ -252,55 +310,86 @@ var InitDemo = function() {
 	mat4.identity(rotx);
 	mat4.identity(rotx);
 	
+
+	//////////////////////////////////
+	//       Create Bacteria        //
+	//////////////////////////////////
+
+	var generatedBacteria = [];
+	let genBact = 0;
+
+	for (i = 0; i < 10; i++) {
+		generatedBacteria.push(new Bacteria(genBact))
+		generatedBacteria[i].generate();
+	};
+
+
 	//////////////////////////////////
 	//            Draw              //
 	//////////////////////////////////
 
 	var loop = function(time = 0){
-		angle = performance.now() / 1000;
-		mat4.fromRotation(rotx,angle,[1,0,0]);
-		mat4.fromRotation(rotz,angle,[0,0,1]);
-		mat4.multiply(world,rotz,rotx);
-		gl.uniformMatrix4fv(matWorldUniformLocation, gl.FALSE, world);
-		gl.clearColor(0.5,0.8,0.8,1.0);
-		gl.clear(gl.COLOR_BUFFER_BIT| gl.DEPTH_BUFFER_BIT);
 
-		gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, index_buffer);
-	    gl.drawElements(gl.TRIANGLES, indexData.length, gl.UNSIGNED_SHORT, 0);
+		gl.clearColor(0.5,0.8,0.8,1.0);
+		gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
+
+		// ABOVE LINES SET BACKGROUND COLOUR
+
+		drawSphere(0,0,0,radius,[0.4, 0.4, 0.4]);
+
+		for (i in generatedBacteria) {
+			generatedBacteria[i].show();
+		}
+
+		// angle = performance.now() / 1000;
+		// mat4.fromRotation(rotx,angle,[1,0,0]);
+		// mat4.fromRotation(rotz,angle,[0,0,1]);
+		// mat4.multiply(world,rotz,rotx);
+		// gl.uniformMatrix4fv(matWorldUniformLocation, gl.FALSE, world);
+
+		// ABOVE CODE CAUSES CONSTANT ROTATION, REPLACE WITH CODE IN ONMOUSEDOWN
 
 	    requestAnimationFrame(loop);
 	}		
 	requestAnimationFrame(loop);
 	//file:///D:/courses/COSC414%20(Graphics)/Lab/index.html
 
-	canvas.onmousedown = function(ev) {
+	var down = false;
+
+	canvas.onmousemove = function(ev){
+
+		this.onmousedown = function(event) {
+			console.log(event.button);
+			if (event.button == 0) {
+				down = true;
+			} 
+		}
+
+		this.onmouseup = function(ev) {
+			down = false;
+		}
 		
-		angle = performance.now() / 1000;
-		mat4.fromRotation(rotx,angle,[1,0,0]);
-		mat4.fromRotation(rotz,angle,[0,0,1]);
-		mat4.multiply(world,rotz,rotx);
-		gl.uniformMatrix4fv(matWorldUniformLocation, gl.FALSE, world);
-		gl.clearColor(0.5,0.8,0.8,1.0);
-		gl.clear(gl.COLOR_BUFFER_BIT| gl.DEPTH_BUFFER_BIT);
+		if (down) {
+			var x = ev.clientX/50;
+			var y = ev.clientY/50;
+  
+		  	mat4.fromRotation(rotx,y,[0,0,1]);
+		  	mat4.fromRotation(rotz,x,[0,1,0]);
+		  	mat4.multiply(world,rotz,rotx);
+		  	gl.uniformMatrix4fv(matWorldUniformLocation, gl.FALSE, world);  
+		}
+		
+			
+		// canvas.onmousedown = function(ev) {
 
-		gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, index_buffer);
-	    gl.drawElements(gl.TRIANGLES, indices.length, gl.UNSIGNED_SHORT, 0);
+		// 	var pixelValues = new Uint8Array(4);
+		// 	gl.readPixels(ev.clientX, ev.clientY, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, pixelValues); 
+		// 	console.log(pixelValues);
+		// 	console.log(ev.clientX);
+		// 	console.log(ev.clientY)
+		// }
 
-		var pixelValues = new Uint8Array(4);
-		gl.readPixels(ev.clientX, ev.clientY, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, pixelValues); 
-		console.log(pixelValues);
-		console.log(ev.clientX);
-		console.log(ev.clientY)
-
-		if(pixelValues[0] == 255 && pixelValues[1] == 255)
-			alert("Yellow");
-		else if(pixelValues[0] == 255 && pixelValues[2] == 255)
-			alert("Purple");
-		else if(pixelValues[0] == 255)
-			alert("Red");
-		else if(pixelValues[1] == 255)
-			alert("Green");
-	}
+	};
 
 	
 };
