@@ -36,17 +36,18 @@ var fragmentShaderText =
 var InitDemo = function() {
 
 	var radius = 1.2;
+	let arcCheck = (2*Math.PI*radius)*(15/360);
 
 	//////////////////////////////////
 	//       initialize WebGL       //
 	//////////////////////////////////;
 
 	var canvas = document.getElementById('game-surface');
-	var gl = canvas.getContext('webgl');
+	var gl = canvas.getContext('webgl', {preserveDrawingBuffer: true});
 
 	if (!gl){
 		console.log('webgl not supported, falling back on experimental-webgl');
-		gl = canvas.getContext('experimental-webgl');
+		gl = canvas.getContext('experimental-webgl', {preserveDrawingBuffer: true});
 	}
 	if (!gl){
 		alert('your browser does not support webgl');
@@ -56,9 +57,11 @@ var InitDemo = function() {
 	canvas.height = window.innerHeight;
 	gl.viewport(0,0,canvas.width,canvas.height);
 
+
 	//////////////////////////////////
 	// create/compile/link shaders  //
 	//////////////////////////////////
+
 	var vertexShader = gl.createShader(gl.VERTEX_SHADER);
 	var fragmentShader = gl.createShader(gl.FRAGMENT_SHADER);
 
@@ -146,11 +149,8 @@ var InitDemo = function() {
          gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, index_buffer);
          gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(indexData), gl.STATIC_DRAW);
 
-		//gl.clearColor(0.5,0.8,0.8,1.0);
-		//gl.clear(gl.COLOR_BUFFER_BIT| gl.DEPTH_BUFFER_BIT);
-
-		gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, index_buffer);
-	    gl.drawElements(gl.TRIANGLES, indexData.length, gl.UNSIGNED_SHORT, 0);
+		 gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, index_buffer);
+	     gl.drawElements(gl.TRIANGLES, indexData.length, gl.UNSIGNED_SHORT, 0);
 
 	};
 
@@ -199,7 +199,7 @@ var InitDemo = function() {
 
 			this.r = 0.2;
 			//generate new colours
-			this.color = [Math.random() * (0.45), Math.random() * (0.45), Math.random() * (0.45)];
+			this.color = [(Math.random() * (0.6)).toFixed(2), (Math.random() * (0.6)).toFixed(2), (Math.random() * (0.6)).toFixed(2)];
 			this.poisoned = false;
 			genBact++;
 
@@ -210,21 +210,21 @@ var InitDemo = function() {
 			if (this.active) this.r = this.r + 0.0001 + (smooth);
 			this.buffer -= smooth;
 			
-			// for (i in generatedBacteria) {
-			// 	if (this.id == generatedBacteria[i].id);
-			// 	else{
-			// 		if (isColliding(this.x, this.y, this.r, generatedBacteria[i].x, generatedBacteria[i].y, generatedBacteria[i].r)) {
-			// 			this.buffer = generatedBacteria[i].r;
-			// 			generatedBacteria[i].delete();
-			// 		}
-			// 	}
+			for (i in generatedBacteria) {
+				if (this.id == generatedBacteria[i].id);
+				else{
+					if (isColliding3D(this.x, this.y, this.z, this.r, generatedBacteria[i].x, generatedBacteria[i].y, generatedBacteria[i].z, generatedBacteria[i].r)) {
+						this.buffer = generatedBacteria[i].r;
+						generatedBacteria[i].delete();
+					}
+				}
 				
-			// }
+			}
 
-			// if (this.r >= arcCheck) {
-			// 	lives--; 
-			// 	this.delete();
-			// }
+			if (this.r >= arcCheck) {
+				console.log("Too Large!");
+				this.delete();
+			}
 
 			drawSphere(this.x, this.y, this.z, this.r, this.color);
 		}
@@ -235,10 +235,27 @@ var InitDemo = function() {
 			this.y = 0;
 			this.active = false;
 			destroyedBacteria++;
-			console.log(destroyedBacteria);
 		}
 
-	}
+	};
+
+	function isColliding3D(x1, y1, z1, r1, x2, y2, z2, r2){
+		/*
+			In order to check if the two bacteria are colliding we must:
+				1. Calculate the distance between (x1, y1, z1) and (x2, y2, z1)
+					a) this is done through the equation
+						sqrt(pow((x2-x1), 2) + pow((y2-y1), 2) + pow((z2-z1), 2))
+				2. Consider the radius of the circles. In order to tell if the circles are touching we:
+					a) add the two radius together
+					b) subtract the added radius from the distance.
+				If distance is < 0 the bacteria are colliding.
+		*/
+		if((Math.sqrt(Math.pow((x2-x1), 2)+Math.pow((y2-y1), 2) + Math.pow((z2-z1), 2))-(r1+r2)) < 0){
+			return true;
+		}else{
+			return false;
+		}
+	};
 
 	//////////////////////////////////
 	//    create triangle buffer    //
@@ -317,6 +334,7 @@ var InitDemo = function() {
 
 	var generatedBacteria = [];
 	let genBact = 0;
+	let destroyedBacteria = 0;
 
 	for (i = 0; i < 10; i++) {
 		generatedBacteria.push(new Bacteria(genBact))
@@ -341,35 +359,40 @@ var InitDemo = function() {
 			generatedBacteria[i].show();
 		}
 
-		// angle = performance.now() / 1000;
-		// mat4.fromRotation(rotx,angle,[1,0,0]);
-		// mat4.fromRotation(rotz,angle,[0,0,1]);
-		// mat4.multiply(world,rotz,rotx);
-		// gl.uniformMatrix4fv(matWorldUniformLocation, gl.FALSE, world);
-
-		// ABOVE CODE CAUSES CONSTANT ROTATION, REPLACE WITH CODE IN ONMOUSEDOWN
-
 	    requestAnimationFrame(loop);
 	}		
 	requestAnimationFrame(loop);
 	//file:///D:/courses/COSC414%20(Graphics)/Lab/index.html
+	
 
 	var down = false;
 
-	canvas.onmousemove = function(ev){
+	canvas.onmousedown = function(event) {
+		if (event.button == 0) {
+			down = true;
+		} 
 
-		this.onmousedown = function(event) {
-			console.log(event.button);
-			if (event.button == 0) {
-				down = true;
-			} 
+		var pixelValues = new Uint8Array(4);
+		gl.readPixels(event.clientX, canvas.height - event.clientY, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, pixelValues);
+		console.log(pixelValues); 
+
+		for (i in generatedBacteria) {
+			if (generatedBacteria[i].color[0] == (pixelValues[0]/255).toFixed(2)){
+				generatedBacteria[i].delete();
+				console.log("Destroyed a bacteria!");
+			}
 		}
+
+	}
+
+	canvas.onmousemove = function(ev){
 
 		this.onmouseup = function(ev) {
 			down = false;
 		}
 		
 		if (down) {
+
 			var x = ev.clientX/50;
 			var y = ev.clientY/50;
   
@@ -379,17 +402,7 @@ var InitDemo = function() {
 		  	gl.uniformMatrix4fv(matWorldUniformLocation, gl.FALSE, world);  
 		}
 		
-			
-		// canvas.onmousedown = function(ev) {
-
-		// 	var pixelValues = new Uint8Array(4);
-		// 	gl.readPixels(ev.clientX, ev.clientY, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, pixelValues); 
-		// 	console.log(pixelValues);
-		// 	console.log(ev.clientX);
-		// 	console.log(ev.clientY)
-		// }
-
 	};
 
-	
 };
+
