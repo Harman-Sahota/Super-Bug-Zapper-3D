@@ -37,6 +37,11 @@ var InitDemo = function() {
 
 	var radius = 1.2;
 	let arcCheck = (2*Math.PI*radius)*(15/360);
+	let score = 0;
+	let parts = [];
+	let lifeCounter = document.getElementById("lives");
+	let scoreCounter = document.getElementById("score");
+	let remainCounter = document.getElementById("remainBact");
 
 	//////////////////////////////////
 	//       initialize WebGL       //
@@ -44,6 +49,8 @@ var InitDemo = function() {
 
 	var canvas = document.getElementById('game-surface');
 	var gl = canvas.getContext('webgl', {preserveDrawingBuffer: true});
+	var particlesCanvas = document.getElementById('particles');
+	var partCanvas = particlesCanvas.getContext('2d')
 
 	if (!gl){
 		console.log('webgl not supported, falling back on experimental-webgl');
@@ -53,8 +60,11 @@ var InitDemo = function() {
 		alert('your browser does not support webgl');
 	}
 
-	canvas.width = window.innerWidth;
-	canvas.height = window.innerHeight;
+	canvas.width = window.innerWidth/1.3;
+	canvas.height = window.innerHeight/1.3;
+	particlesCanvas.width = canvas.width;
+	particlesCanvas.height = canvas.height;
+
 	gl.viewport(0,0,canvas.width,canvas.height);
 
 
@@ -94,7 +104,7 @@ var InitDemo = function() {
 	//////////////////////////////////////
 
 
-	function drawSphere(x,y,z,r,color) {
+	function drawSphere(x,y,z,r,color, surface) {
 
 		var vertexPositionData = [];
 		var colors = [];
@@ -173,8 +183,8 @@ var InitDemo = function() {
 
 		//method for generating new random x and y values
 		newPointValues(){
-			this.genTheta = Math.floor(Math.random() * 100);;
-			this.genPhi = Math.floor(Math.random() * 100);;
+			this.genTheta = Math.floor(Math.random() * 100);
+			this.genPhi = Math.floor(Math.random() * 100);
 		}
 
 		genCircleValue(){
@@ -185,9 +195,9 @@ var InitDemo = function() {
 			var sinPhi = Math.sin(phi);
 			var cosPhi = Math.cos(phi);
 
-			this.x = (radius * cosPhi * sinTheta);
-			this.y = (radius * cosTheta);
-			this.z = (radius * sinPhi * sinTheta);
+			this.x = ((radius-0.1) * cosPhi * sinTheta);
+			this.y = ((radius-0.1) * cosTheta);
+			this.z = ((radius-0.1) * sinPhi * sinTheta);
 		}
 
 		//method for generating new bacteria circles
@@ -198,6 +208,27 @@ var InitDemo = function() {
 			this.genCircleValue();
 
 			this.r = 0.2;
+
+			let attempt = 0;
+			//iterate through bacteria already generated
+			for(let i = 0; i < generatedBacteria.length; i++){
+				//check to avoid infinite loop
+				if(attempt > 500){
+					console.log("Not enough area for new bacteria");
+					break;
+				}
+
+				//if there is a collision we need to generate new data again
+				//ensure it will loop through all the bacteria again
+				if(isColliding3D(this.x, this.y, this.z, this.r, generatedBacteria[i].x, generatedBacteria[i].y, generatedBacteria[i].z, generatedBacteria[i].r)){
+					this.newPointValues();
+					this.genCircleValue();
+					attempt++;
+					//ensure it will loop through all bacteria again
+					i = -1;
+				}
+			}
+
 			//generate new colours
 			this.color = [(Math.random() * (0.6)).toFixed(2), (Math.random() * (0.6)).toFixed(2), (Math.random() * (0.6)).toFixed(2)];
 			this.poisoned = false;
@@ -216,6 +247,7 @@ var InitDemo = function() {
 					if (isColliding3D(this.x, this.y, this.z, this.r, generatedBacteria[i].x, generatedBacteria[i].y, generatedBacteria[i].z, generatedBacteria[i].r)) {
 						this.buffer = generatedBacteria[i].r;
 						generatedBacteria[i].delete();
+						lives -= 1
 					}
 				}
 				
@@ -226,7 +258,7 @@ var InitDemo = function() {
 				this.delete();
 			}
 
-			drawSphere(this.x, this.y, this.z, this.r, this.color);
+			drawSphere(this.x, this.y, this.z, this.r, this.color, true);
 		}
 
 		delete(){
@@ -234,6 +266,7 @@ var InitDemo = function() {
 			this.x = 0;
 			this.y = 0;
 			this.active = false;
+			console.log("Destroyed!");
 			destroyedBacteria++;
 		}
 
@@ -250,9 +283,10 @@ var InitDemo = function() {
 					b) subtract the added radius from the distance.
 				If distance is < 0 the bacteria are colliding.
 		*/
-		if((Math.sqrt(Math.pow((x2-x1), 2)+Math.pow((y2-y1), 2) + Math.pow((z2-z1), 2))-(r1+r2)) < 0){
+		if((Math.sqrt(Math.pow((x2-x1), 2) + Math.pow((y2-y1), 2) + Math.pow((z2-z1), 2)) - (r1+r2)) + 0.5 < 0){
 			return true;
-		}else{
+		}
+		else {
 			return false;
 		}
 	};
@@ -341,25 +375,50 @@ var InitDemo = function() {
 		generatedBacteria[i].generate();
 	};
 
-
 	//////////////////////////////////
 	//            Draw              //
 	//////////////////////////////////
 
+	let lives = 2;
 	var loop = function(time = 0){
+		
 
-		gl.clearColor(0.5,0.8,0.8,1.0);
-		gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
-
-		// ABOVE LINES SET BACKGROUND COLOUR
-
-		drawSphere(0,0,0,radius,[0.4, 0.4, 0.4]);
-
-		for (i in generatedBacteria) {
-			generatedBacteria[i].show();
+		if (destroyedBacteria >= 10) {
+			endMess = document.getElementById("endMessage");
+			if(score<0){
+				document.getElementById("gameOver").style.color = "red";
+				document.getElementById("gameOver").innerHTML = "Game over! Try again!";
+				endMess.innerHTML = "You eliminated all the bacteria, but your score is too low. :(";
+			}else{
+				document.getElementById("gameOver").style.color = "green";
+				document.getElementById("gameOver").innerHTML = "You win! Congrats!";
+				endMess.innerHTML = "You did really well! Won with a positive score: 10/10";
+			}
 		}
 
-	    requestAnimationFrame(loop);
+
+		if (lives > 0) {
+
+			gl.clearColor(0.5,0.8,0.8,1.0);
+			gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
+
+			// ABOVE LINES SET BACKGROUND COLOUR
+
+			drawSphere(0,0,0,radius,[0.4, 0.4, 0.4], false);
+
+			for (i in generatedBacteria) {
+				generatedBacteria[i].show();
+				lifeCounter.innerHTML = lives;
+				scoreCounter.innerHTML = score;
+				remainCounter.innerHTML = genBact - destroyedBacteria;
+			}
+
+			partCanvas.clearRect(0, 0, canvas.width, canvas.height);
+			for(i in parts) {
+				parts[i].show();
+			}
+			requestAnimationFrame(loop);
+		}
 	}		
 	requestAnimationFrame(loop);
 	//file:///D:/courses/COSC414%20(Graphics)/Lab/index.html
@@ -375,11 +434,17 @@ var InitDemo = function() {
 		var pixelValues = new Uint8Array(4);
 		gl.readPixels(event.clientX, canvas.height - event.clientY, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, pixelValues);
 		console.log(pixelValues); 
+		let hit = false;
 
 		for (i in generatedBacteria) {
 			if (generatedBacteria[i].color[0] == (pixelValues[0]/255).toFixed(2)){
+				console.log("score before: " + score);
+				console.log("radius: " + generatedBacteria[i].r)
+				console.log("difference: " + (score + Math.round(1/generatedBacteria[i].r)));
+				score += Math.round(1/generatedBacteria[i].r);
+				console.log("score after: " + score);
 				generatedBacteria[i].delete();
-				console.log("Destroyed a bacteria!");
+				hit = true;
 			}
 		}
 
@@ -390,12 +455,15 @@ var InitDemo = function() {
 		this.onmouseup = function(ev) {
 			down = false;
 		}
-		
+
 		if (down) {
 
-			var x = ev.clientX/50;
-			var y = ev.clientY/50;
+			var x =+ ev.clientX/250;
+			var y =+ ev.clientY/250;
   
+			if (x > 360) x = 0
+			if (y > 360) y = 0
+
 		  	mat4.fromRotation(rotx,y,[0,0,1]);
 		  	mat4.fromRotation(rotz,x,[0,1,0]);
 		  	mat4.multiply(world,rotz,rotx);
