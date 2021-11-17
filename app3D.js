@@ -48,7 +48,7 @@ var InitDemo = function() {
 	//       initialize WebGL       //
 	//////////////////////////////////;
 
-	var canvas = document.getElementById('game-surface');
+	var canvas = document.getElementById('gameSurface');
 	var gl = canvas.getContext('webgl', {preserveDrawingBuffer: true});
 	var particlesCanvas = document.getElementById('particles');
 	var partCanvas = particlesCanvas.getContext('2d')
@@ -165,6 +165,64 @@ var InitDemo = function() {
 
 	};
 
+	function drawPatch(x,y,z,r,color, surface){
+        var vertexPositionData = [];
+		var colors = [];
+		var indexData = [];
+
+		latitudeBands = 100;
+		longitudeBands = 100;
+
+		for (var latNumber=0; latNumber <= latitudeBands; latNumber++) {
+			var theta = latNumber * Math.PI / latitudeBands;
+			var sinTheta = Math.sin(theta);
+			var cosTheta = Math.cos(theta);
+
+			for (var longNumber=0; longNumber <= longitudeBands; longNumber++) {
+				var phi = longNumber * 2 * Math.PI / longitudeBands;
+				var sinPhi = Math.sin(phi);
+				var cosPhi = Math.cos(phi);
+
+				var x1 = x + (r * cosPhi * sinTheta);
+				var y1 = y + (r * cosTheta);
+				var z1 = z + (r * sinPhi * sinTheta);
+
+				colors.push(color[0]);
+				colors.push(color[1]);
+				colors.push(color[2]);
+
+				vertexPositionData.push(x1);
+				vertexPositionData.push(y1);
+				vertexPositionData.push(z1);
+
+				var first = (latNumber * (longitudeBands + 1)) + longNumber;
+				var second = first + longitudeBands + 1;
+				indexData.push(first);
+				indexData.push(second);
+				indexData.push(first + 1);
+
+				indexData.push(second);
+				indexData.push(second + 1);
+				indexData.push(first + 1);
+			}
+		}
+
+         // Create and store data into vertex buffer
+         gl.bindBuffer(gl.ARRAY_BUFFER, vertex_buffer);
+         gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertexPositionData), gl.STATIC_DRAW);
+
+         // Create and store data into color buffer
+         gl.bindBuffer(gl.ARRAY_BUFFER, color_buffer);
+         gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(colors), gl.STATIC_DRAW);
+
+         // Create and store data into index buffer
+         gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, index_buffer);
+         gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(indexData), gl.STATIC_DRAW);
+
+		 gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, index_buffer);
+	     gl.drawElements(gl.TRIANGLES, indexData.length, gl.UNSIGNED_SHORT, 0);
+    };
+
 	class Bacteria {
 
 		//constructor for when id is specified
@@ -260,7 +318,7 @@ var InitDemo = function() {
 				this.delete();
 			}
 
-			drawSphere(this.x, this.y, this.z, this.r, this.color, true);
+			drawPatch(this.x, this.y, this.z, this.r, this.color, true);
 		}
 
 		delete(){
@@ -292,6 +350,78 @@ var InitDemo = function() {
 			return false;
 		}
 	};
+
+	function createExplosion(bacteria){
+		//convert bacteria data to canvas data so we can know where things are
+		/*
+			I cannot figure out these equations
+			X_clip = -1 + (2*x_canvas)/w
+			Y_clip = -1 + 2(h-y_canvas)/h
+		*/
+		let bacteriaX = (bacteria.x + 2/75 + 1)*300;
+		let bacteriaY = -1 * (bacteria.y-1) * 300 - 8; 
+		let r = (((bacteria.x + bacteria.r) + 2/75 + 1) * 300) - bacteriaX;
+		let num = 0;
+		let partColor = bacteria.color;
+
+		for(let x = 0; x < r; x++){
+			for(let y = 0; y < r; y++){
+				if(num % 2 == 0){
+					let partX = bacteriaX + x;
+					let partY = bacteriaY + y;
+					let partX2 = bacteriaX - x;
+					let partY2 = bacteriaY - y;
+
+					//create a particle for each quarter of the bacteria
+					let part = new Particle(partX, partY, 5, partColor);
+					//console.log("particle: " + part);
+					parts.push(part);
+					part = new Particle(partX2, partY2, 5, partColor);
+					parts.push(part);
+					part = new Particle(partX, partY2, 5, partColor);
+					parts.push(part);
+					part = new Particle(partX2, partY, 5, partColor);
+					parts.push(part);
+
+				}
+				num++;
+			}
+		}
+		//console.log("created: " + parts.length);
+
+	}
+
+	//////////////////////////////////
+	//         Particle Class       //
+	//////////////////////////////////
+
+
+	class Particle{
+		constructor(x, y, r, color){
+			this.x = x;
+			this.y = y;
+			this.r = r + Math.random() * 5;
+			//using traditional javascript animation -> colour needs to be rgba
+			this.color ="rgba(" + Math.round((1*color[0]) * 255) + "," + Math.round((1*color[1]) * 255) + "," + Math.round((1*color[2]) * 255) + "," + Math.random()*0.95 + ")"
+			this.speed = {x: -1 + Math.random() *5, y: -1 + Math.random() * 2}
+			this.life = 20 + Math.random() * 10;
+		}
+		show(){
+			//draw if != life and its not too small
+			if(this.life > 0 && this.r > 0){
+				partCanvas.beginPath();
+				partCanvas.rect(this.x, this.y, this.r, Math.PI * 2);
+				partCanvas.fillStyle = this.color;
+				partCanvas.fill();
+
+				// Update data
+				this.life--;
+				this.r -= 0.6;
+				this.x += this.speed.x;
+				this.y += this.speed.y;
+			}
+		}
+	}
 
 	//////////////////////////////////
 	//    create triangle buffer    //
@@ -406,7 +536,7 @@ var InitDemo = function() {
 
 		if (lives > 0) {
 
-			gl.clearColor(0.5,0.8,0.8,1.0);
+			gl.clearColor(0.0,0.0,0.0,0.0);
 			gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
 
 			// ABOVE LINES SET BACKGROUND COLOUR
@@ -419,7 +549,6 @@ var InitDemo = function() {
 				scoreCounter.innerHTML = score;
 				remainCounter.innerHTML = genBact - destroyedBacteria;
 			}
-
 			partCanvas.clearRect(0, 0, canvas.width, canvas.height);
 			for(i in parts) {
 				parts[i].show();
@@ -450,7 +579,9 @@ var InitDemo = function() {
 				console.log("difference: " + (score + Math.round(1/generatedBacteria[i].r)));
 				score += Math.round(1/generatedBacteria[i].r);
 				console.log("score after: " + score);
+				createExplosion(generatedBacteria[i]);
 				generatedBacteria[i].delete();
+				
 			}
 		}
 
