@@ -351,7 +351,7 @@ var InitDemo = function() {
 		}
 	};
 
-	function createExplosion(bacteria){
+	function createExplosion(bacteria, clientX, clientY){
 		//convert bacteria data to canvas data so we can know where things are
 		/*
 			I cannot figure out these equations
@@ -360,17 +360,17 @@ var InitDemo = function() {
 		*/
 		let bacteriaX = (bacteria.x + 2/75 + 1)*300;
 		let bacteriaY = -1 * (bacteria.y-1) * 300 - 8; 
-		let r = (((bacteria.x + bacteria.r) + 2/75 + 1) * 300) - bacteriaX;
+		let r = (((bacteria.x + bacteria.r) + 2/75 + 1) * 300) - bacteriaX - 50;
 		let num = 0;
 		let partColor = bacteria.color;
 
 		for(let x = 0; x < r; x++){
 			for(let y = 0; y < r; y++){
 				if(num % 2 == 0){
-					let partX = bacteriaX + x;
-					let partY = bacteriaY + y;
-					let partX2 = bacteriaX - x;
-					let partY2 = bacteriaY - y;
+					let partX = clientX + x;
+					let partY = clientY + y;
+					let partX2 = clientX - x;
+					let partY2 = clientY - y;
 
 					//create a particle for each quarter of the bacteria
 					let part = new Particle(partX, partY, 5, partColor);
@@ -561,10 +561,14 @@ var InitDemo = function() {
 	
 
 	var down = false;
+	var startX = 0;
+	var startY = 0;
 
 	canvas.onmousedown = function(event) {
 		if (event.button == 0) {
 			down = true;
+			startX = event.clientX;
+			startY = event.clientY;
 		} 
 
 		var pixelValues = new Uint8Array(4);
@@ -572,20 +576,24 @@ var InitDemo = function() {
 		console.log(pixelValues); 
 
 		for (i in generatedBacteria) {
-			if (generatedBacteria[i].color[0] == (pixelValues[0]/255).toFixed(2)){
+			if (generatedBacteria[i].color[0] == (pixelValues[0]/255).toFixed(2) && generatedBacteria[i].color[1] == (pixelValues[1]/255).toFixed(2)){
 				if ((pixelValues[0]/255).toFixed(2) == 128 && (pixelValues[1]/255).toFixed(2) == 204) break
 				console.log("score before: " + score);
 				console.log("radius: " + generatedBacteria[i].r)
 				console.log("difference: " + (score + Math.round(1/generatedBacteria[i].r)));
 				score += Math.round(1/generatedBacteria[i].r);
 				console.log("score after: " + score);
-				createExplosion(generatedBacteria[i]);
+				createExplosion(generatedBacteria[i], event.clientX, event.clientY);
 				generatedBacteria[i].delete();
 				
 			}
 		}
 
 	}
+
+	var worldX = 0;
+	var worldY = 0;
+
 
 	canvas.onmousemove = function(ev){
 
@@ -595,14 +603,15 @@ var InitDemo = function() {
 
 		if (down) {
 
-			var x =+ ev.clientX/250;
-			var y =+ ev.clientY/250;
-  
-			if (x > 360) x = 0
-			if (y > 360) y = 0
+			worldX += (startX - ev.clientX)/400;
+			worldY += (startY - ev.clientY)/400;
 
-		  	mat4.fromRotation(rotx,y,[0,0,1]);
-		  	mat4.fromRotation(rotz,x,[0,1,0]);
+  
+			if ( worldX > 360) worldX = 0
+			if ( worldY > 360) worldY = 0
+
+		  	mat4.fromRotation(rotx,worldY,[0,0,1]);
+		  	mat4.fromRotation(rotz,worldX,[0,1,0]);
 		  	mat4.multiply(world,rotz,rotx);
 		  	gl.uniformMatrix4fv(matWorldUniformLocation, gl.FALSE, world);  
 		}
