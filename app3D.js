@@ -35,13 +35,14 @@ var fragmentShaderText =
 
 var InitDemo = function() {
 
-	var radius = 1.2;
+	var radius = 1;
 	let arcCheck = (2*Math.PI*radius)*(15/360);
 	let score = 0;
 	let parts = [];
 	let lifeCounter = document.getElementById("lives");
 	let scoreCounter = document.getElementById("score");
 	let remainCounter = document.getElementById("remainBact");
+	let endMess = document.getElementById("endMessage");
 
 	//////////////////////////////////
 	//       initialize WebGL       //
@@ -247,7 +248,6 @@ var InitDemo = function() {
 					if (isColliding3D(this.x, this.y, this.z, this.r, generatedBacteria[i].x, generatedBacteria[i].y, generatedBacteria[i].z, generatedBacteria[i].r)) {
 						this.buffer = generatedBacteria[i].r;
 						generatedBacteria[i].delete();
-						lives -= 1
 					}
 				}
 				
@@ -255,6 +255,8 @@ var InitDemo = function() {
 
 			if (this.r >= arcCheck) {
 				console.log("Too Large!");
+				lives -= 1;
+				score -= 20;
 				this.delete();
 			}
 
@@ -283,7 +285,7 @@ var InitDemo = function() {
 					b) subtract the added radius from the distance.
 				If distance is < 0 the bacteria are colliding.
 		*/
-		if((Math.sqrt(Math.pow((x2-x1), 2) + Math.pow((y2-y1), 2) + Math.pow((z2-z1), 2)) - (r1+r2)) + 0.5 < 0){
+		if((Math.sqrt(Math.pow((x2-x1), 2) + Math.pow((y2-y1), 2) + Math.pow((z2-z1), 2)) - (r1+r2)) + 0.1 < 0){
 			return true;
 		}
 		else {
@@ -396,6 +398,11 @@ var InitDemo = function() {
 			}
 		}
 
+		if (lives == 0) {
+			document.getElementById("gameOver").style.color = "red";
+			document.getElementById("gameOver").innerHTML = "Game over! Try again!";
+			endMess.innerHTML = "Two bacteria grew too large! Try again!";
+		}
 
 		if (lives > 0) {
 
@@ -434,17 +441,16 @@ var InitDemo = function() {
 		var pixelValues = new Uint8Array(4);
 		gl.readPixels(event.clientX, canvas.height - event.clientY, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, pixelValues);
 		console.log(pixelValues); 
-		let hit = false;
 
 		for (i in generatedBacteria) {
 			if (generatedBacteria[i].color[0] == (pixelValues[0]/255).toFixed(2)){
+				if ((pixelValues[0]/255).toFixed(2) == 128 && (pixelValues[1]/255).toFixed(2) == 204) break
 				console.log("score before: " + score);
 				console.log("radius: " + generatedBacteria[i].r)
 				console.log("difference: " + (score + Math.round(1/generatedBacteria[i].r)));
 				score += Math.round(1/generatedBacteria[i].r);
 				console.log("score after: " + score);
 				generatedBacteria[i].delete();
-				hit = true;
 			}
 		}
 
