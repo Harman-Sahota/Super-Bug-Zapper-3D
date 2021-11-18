@@ -174,7 +174,7 @@ var InitDemo = function() {
 		longitudeBands = 100;
 
 		for (var latNumber=0; latNumber <= latitudeBands; latNumber++) {
-			var theta = latNumber * (Math.PI/2) / (latitudeBands-1);
+			var theta = latNumber * (Math.PI) / (latitudeBands-1);
 			var sinTheta = Math.sin(theta);
 			var cosTheta = Math.cos(theta);
 
