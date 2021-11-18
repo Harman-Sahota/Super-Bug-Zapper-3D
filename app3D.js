@@ -416,7 +416,7 @@ var InitDemo = function() {
 
 				// Update data
 				this.life--;
-				this.r -= 0.6;
+				this.r -= 1.5;
 				this.x += this.speed.x;
 				this.y += this.speed.y;
 			}
