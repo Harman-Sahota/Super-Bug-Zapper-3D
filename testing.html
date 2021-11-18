@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>Super Bug Zapper 3D</title>
+</head>
+
+<style>
+	#canvasContainer {
+    padding-bottom: 35em;
+}
+canvas{
+    position:absolute;
+    left:0px;
+    top:0px;
+}
+#gameSurface {
+    z-index: 1;
+}
+#particles {
+	pointer-events: none;
+    z-index: 2;
+}
+</style>
+
+<body onload="InitDemo();">
+
+<div id = "canvasContainer">
+	<canvas id="gameSurface" width="800" height="600"> Your browser does not support HTML5</canvas>
+	<canvas id="particles" width="800" height="600"></canvas>
+</div>
+
+<!-- we write it here instead of head because we want to call the js after
+the canvas being initialized-->
+<script src= "gl-matrix.js"></script>
+<script src = "testing.js"></script>
+
+<div class = "textContainer">
+	<br><br><br><br><br>
+	<h1 id="gameOver" style="color:red; font-size: xx-large; font-weight: 900;"></h1>
+	<p id = "endMessage"></p>
+	<p>Click the 'bacteria' to destroy</p>
+	<p>Click and drag to rotate the sphere!</p>
+	<p>Each time a bacteria grows too big, you will lose a life</p>
+	<p>Lives: <span id="lives"></span></p>
+	<p>Score: <span id = "score"></span></p>
+	<p>Remaining Bacteria: <span id = "remainBact"></span></p>
+</div>
+
+</body>
+</html>
