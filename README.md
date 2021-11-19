@@ -53,8 +53,6 @@ The longer you wait before eradicating the bacteria, the more points you gain! B
 A player wins when all the bacteria have been eradicated before any two bacteria can grow too big. You must have a positive score or a score of zero in order to win!
 
 The conditions for losing are as follows:
-
-If the score is less than 0, either you had too many missed clicks or the two bacteria grew to be too big.
-
-Any two of the bacteria grew too big, if you have a positive score at this point it will automatically be reduced to -1.
+- If the score is less than 0, either you had too many missed clicks or the two bacteria grew to be too big.
+- Any two of the bacteria grew too big, if you have a positive score at this point it will automatically be reduced to -1.
 
