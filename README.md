@@ -19,6 +19,7 @@ A simple 3D game made with WebGL where you must click on the growing bacteria to
 9. [x] The player wins if all bacteria are poisoned before any two different bacteria reach the threshold mentioned above.<br><br>
 
 ### Bonus Features
+
 A well-developed implementation for the above will earn a grade of 80%. To get higher grade, two of the following should be completed in addition (each feature successfully completed adds 10%).<br>
 
 1. [ ] The effect of the poison administered also propagates outward from the point of insertion of the position until all the bacteria are destroyed.<br>
