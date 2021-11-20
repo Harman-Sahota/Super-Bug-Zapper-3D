@@ -111,8 +111,8 @@ var InitDemo = function() {
 		var colors = [];
 		var indexData = [];
 
-		latitudeBands = 100;
-		longitudeBands = 100;
+		latitudeBands = 50;
+		longitudeBands = 50;
 
 		for (var latNumber=0; latNumber <= latitudeBands; latNumber++) {
 			var theta = latNumber * Math.PI / latitudeBands;
@@ -170,8 +170,8 @@ var InitDemo = function() {
 		var colors = [];
 		var indexData = [];
 
-		latitudeBands = 100;
-		longitudeBands = 100;
+		latitudeBands = 50;
+		longitudeBands = 50;
 
 		for (var latNumber=0; latNumber <= latitudeBands; latNumber++) {
 			var theta = latNumber * Math.PI / latitudeBands;
@@ -183,9 +183,9 @@ var InitDemo = function() {
 				var sinPhi = Math.sin(phi);
 				var cosPhi = Math.cos(phi);
 
-				var x1 = x + (r * cosPhi * sinTheta);
-				var y1 = y + (r * cosTheta);
-				var z1 = z + (r * sinPhi * sinTheta);
+				var x1 = x + (r/(1 + ((90 - phi)/180 + (90 - theta)/180)) * cosPhi * sinTheta);
+				var y1 = y + (r/(1 + (90 - theta)/90) * cosTheta);
+				var z1 = z + (r/(1 + ((90 - phi)/180 + (90 - theta)/180)) * sinPhi * sinTheta);
 
 				colors.push(color[0]);
 				colors.push(color[1]);
@@ -318,7 +318,7 @@ var InitDemo = function() {
 				this.delete();
 			}
 
-			drawPatch(this.x, this.y, this.z, this.r, this.color, true);
+			drawPatch(this.x, this.y, this.z, this.r, this.color, true), this.genPhi, this.genTheta;
 		}
 
 		delete(){
@@ -578,10 +578,11 @@ var InitDemo = function() {
 		for (i in generatedBacteria) {
 			if (generatedBacteria[i].color[0] == (pixelValues[0]/255).toFixed(2) && generatedBacteria[i].color[1] == (pixelValues[1]/255).toFixed(2)){
 				if ((pixelValues[0]/255).toFixed(2) == 128 && (pixelValues[1]/255).toFixed(2) == 204) break
+
 				console.log("score before: " + score);
 				console.log("radius: " + generatedBacteria[i].r)
-				console.log("difference: " + (score + Math.round(1/generatedBacteria[i].r)));
-				score += Math.round(1/generatedBacteria[i].r);
+				console.log("difference: " + (score + Math.round(1/(generatedBacteria[i].r * 0.8))));
+				score += Math.round(1/(generatedBacteria[i].r * 0.8));
 				console.log("score after: " + score);
 				createExplosion(generatedBacteria[i], event.clientX, event.clientY);
 				generatedBacteria[i].delete();
@@ -603,14 +604,13 @@ var InitDemo = function() {
 
 		if (down) {
 
-			worldX += (startX - ev.clientX)/400;
-			worldY += (startY - ev.clientY)/400;
+			worldX += (startX - ev.clientX)/600;
+			worldY += (startY - ev.clientY)/600;
 
-  
 			if ( worldX > 360) worldX = 0
 			if ( worldY > 360) worldY = 0
 
-		  	mat4.fromRotation(rotx,worldY,[0,0,1]);
+		  	mat4.fromRotation(rotx,worldY,[1,0,0]);
 		  	mat4.fromRotation(rotz,worldX,[0,1,0]);
 		  	mat4.multiply(world,rotz,rotx);
 		  	gl.uniformMatrix4fv(matWorldUniformLocation, gl.FALSE, world);  
