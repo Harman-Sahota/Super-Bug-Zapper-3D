@@ -15,8 +15,8 @@ A simple 3D game made with WebGL where you must click on the growing bacteria to
 4. [x] The player needs to eradicate the bacteria by placing the mouse over the bacteria and hitting a button.<br>
 5. [x] The effect of the poison administered is to immediately remove the poisoned bacteria.<br>
 6. [x] The game can randomly generate up to a fixed number (say 10) of different bacteria (each with a different color).<br>
-7. [ ] The bacteria appear as a colored circular patch on the surfaceof the sphere.<br>
-8. [ ] The game gains points through the delays in the user responding and by any specific bacteria reaching a threshold (for example,a diameter of a 30-degree arcon a great circle of the sphere).<br>
+7. [x] The bacteria appear as a colored circular patch on the surfaceof the sphere.<br>
+8. [x] The game gains points through the delays in the user responding and by any specific bacteria reaching a threshold (for example,a diameter of a 30-degree arcon a great circle of the sphere).<br>
 9. [x] The player wins if all bacteria are poisoned before any two different bacteria reach the threshold mentioned above.<br><br>
 
 ### Bonus Features
